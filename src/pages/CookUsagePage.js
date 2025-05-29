@@ -31,14 +31,25 @@ export default function CookUsagePage() {
   }, []);
 
   const handleChange = (id, value) => {
+    const num = parseFloat(value);
+    if (isNaN(num) || num < 0) return;
     setUsage((prev) => ({
       ...prev,
-      [id]: parseFloat(value) || 0,
+      [id]: num,
     }));
   };
 
   const handleSubmit = async () => {
     const today = new Date().toISOString().split("T")[0];
+
+    // ❗ Validation: Prevent over-usage
+    for (let p of products) {
+      const usedQty = usage[p.id];
+      if (usedQty && usedQty > parseFloat(p.quantity)) {
+        alert(`❌ Cannot use more than available for "${p.name}". (Available: ${p.quantity}, Entered: ${usedQty})`);
+        return;
+      }
+    }
 
     try {
       for (let p of products) {
@@ -94,6 +105,7 @@ export default function CookUsagePage() {
                   <input
                     type="number"
                     min="0"
+                    max={p.quantity}
                     value={usage[p.id] || ""}
                     onChange={(e) => handleChange(p.id, e.target.value)}
                     className="form-control form-control-sm w-75"
