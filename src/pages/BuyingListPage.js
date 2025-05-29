@@ -87,7 +87,11 @@ export default function BuyingListPage() {
   return (
     <div className="container py-4">
       <h2 className="mb-4">🛒 <strong>Buying List</strong> <small className="text-muted">(Threshold Alerts)</small></h2>
-
+      {pendingIds.length > 0 && (
+  <div className="alert alert-info">
+    ℹ️ <strong>{pendingIds.length}</strong> items are already marked as ordered and pending arrival.
+  </div>
+)}
       <div className="d-flex justify-content-between mb-3 flex-wrap gap-2">
         <input
           type="text"
