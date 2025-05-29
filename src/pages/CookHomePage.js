@@ -1,12 +1,30 @@
 // src/pages/CookHomePage.js
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { signOut } from "firebase/auth";
+import { auth } from "../firebase";
 
 export default function CookHomePage() {
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigate("/");
+    } catch (error) {
+      alert("Logout failed: " + error.message);
+    }
+  };
+
   return (
     <div className="container py-5">
-      <div className="text-center mb-5">
-        <h1 className="fw-bold text-success">👨‍🍳 Cook Dashboard</h1>
-        <p className="text-muted">Access your daily tasks and inventory logs here.</p>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h1 className="fw-bold text-success">👨‍🍳 Cook Dashboard</h1>
+          <p className="text-muted">Access your daily tasks and inventory logs here.</p>
+        </div>
+        <button className="btn btn-outline-danger" onClick={handleLogout}>
+          🔒 Logout
+        </button>
       </div>
 
       <div className="row justify-content-center">
