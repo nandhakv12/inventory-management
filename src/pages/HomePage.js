@@ -50,6 +50,28 @@ export default function HomePage() {
                   <Link to="/upload" className="btn btn-link p-0">
                     ➤ Add New Product
                   </Link>
+                <li className="mb-2">
+                  <Link to="/manager/ordered" className="btn btn-link p-0">
+                    ➤ Ordered Page 
+                  </Link>
+                </li>
+                <div>
+  <h2 className="text-xl font-semibold mb-2">📦 Orders & Logs</h2>
+  <ul className="space-y-1">
+    <li>
+      <Link to="/manager/ordered-logs" className="text-blue-600 underline">
+        ➤ Ordered Logs (Pending)
+      </Link>
+    </li>
+    <li>
+      <Link to="/manager/received-logs" className="text-blue-600 underline">
+        ➤ Received Logs
+      </Link>
+    </li>
+  </ul>
+</div>
+
+                  
                 </li>
               </ul>
             </div>

@@ -4,79 +4,69 @@ import {
   collection,
   onSnapshot,
   query,
-  doc,
-  updateDoc,
   addDoc,
-  serverTimestamp,
+  getDocs,
 } from "firebase/firestore";
 
 export default function BuyingListPage() {
   const [buyList, setBuyList] = useState([]);
+  const [pendingIds, setPendingIds] = useState([]);
   const [search, setSearch] = useState("");
   const [sortAsc, setSortAsc] = useState(true);
 
   useEffect(() => {
     const q = query(collection(db, "inventory_items"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsub = onSnapshot(q, async (snapshot) => {
       const data = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
 
+      const pendingSnap = await getDocs(collection(db, "pending_orders"));
+      const pending = pendingSnap.docs.map((doc) => doc.data().product_id);
+      setPendingIds(pending);
+
       const filtered = data.filter((item) => {
         const qty = parseFloat(item.quantity);
         const threshold = parseFloat(item.threshold);
-        return qty <= threshold + 5;
+        return qty <= threshold + 5 && !pending.includes(item.id);
       });
 
       setBuyList(filtered);
     });
 
-    return () => unsubscribe();
+    return () => unsub();
   }, []);
 
   const handleMarkAsOrdered = async (item) => {
-    const quantityStr = prompt(`Enter quantity received for "${item.name}":`);
-    const arrivalDate = prompt(
-      `Enter arrival date (YYYY-MM-DD):`,
-      new Date().toISOString().split("T")[0]
-    );
+    const quantityStr = prompt(`Enter quantity to order for "${item.name}":`);
+    const orderedDate = prompt("Enter ordered date (YYYY-MM-DD):", new Date().toISOString().split("T")[0]);
+    const notes = prompt("Enter any special notes (optional):", "");
 
-    const receivedQty = parseFloat(quantityStr);
-    if (isNaN(receivedQty) || receivedQty <= 0) {
-      alert("❌ Invalid quantity received.");
+    const orderedQty = parseFloat(quantityStr);
+    if (isNaN(orderedQty) || orderedQty <= 0) {
+      alert("❌ Invalid quantity.");
       return;
     }
 
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(arrivalDate)) {
-      alert("❌ Invalid date format. Use YYYY-MM-DD.");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(orderedDate)) {
+      alert("❌ Invalid date format.");
       return;
     }
-
-    const newQuantity = parseFloat(item.quantity) + receivedQty;
-    const docRef = doc(db, "inventory_items", item.id);
 
     try {
-      await updateDoc(docRef, {
-        quantity: newQuantity,
-        lastOrderedDate: arrivalDate,
-        lastOrderedQty: receivedQty,
-      });
-
-      await addDoc(collection(db, "inventory_logs"), {
+      await addDoc(collection(db, "pending_orders"), {
         product_id: item.id,
-        action_type: "restock",
-        received_quantity: receivedQty,
-        old_quantity: item.quantity,
-        new_quantity: newQuantity,
-        arrival_date: arrivalDate,
-        user: "manager@example.com",
-        timestamp: serverTimestamp(),
+        name: item.name,
+        category: item.category,
+        ordered_quantity: orderedQty,
+        ordered_date: orderedDate,
+        notes,
       });
 
-      alert(`✅ ${item.name} inventory updated.`);
+      alert(`✅ Order logged for ${item.name}.`);
     } catch (error) {
-      alert("❌ Error updating inventory: " + error.message);
+      alert("❌ Failed to log order: " + error.message);
     }
   };
 
@@ -91,9 +81,7 @@ export default function BuyingListPage() {
       item.name.toLowerCase().includes(search.toLowerCase())
     )
     .sort((a, b) =>
-      sortAsc
-        ? a.name.localeCompare(b.name)
-        : b.name.localeCompare(a.name)
+      sortAsc ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
     );
 
   return (
@@ -117,7 +105,7 @@ export default function BuyingListPage() {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="alert alert-success">✅ All products are above threshold.</div>
+        <div className="alert alert-success">✅ All products are above threshold or already ordered.</div>
       ) : (
         <div className="table-responsive">
           <table className="table table-bordered table-hover">
