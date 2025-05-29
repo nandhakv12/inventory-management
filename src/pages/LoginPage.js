@@ -19,16 +19,20 @@ export default function LoginPage({ setUserRole }) {
       const userDoc = await getDoc(doc(db, "users", uid));
       if (userDoc.exists()) {
         const { role } = userDoc.data();
-        setUserRole(role);
 
+        // Save to state and localStorage
+        setUserRole(role);
+        localStorage.setItem("userRole", role);
+
+        // Redirect
         if (role === "manager") navigate("/manager/home");
         else if (role === "cook") navigate("/cook/home");
-        else alert("Unauthorized role");
+        else alert("❌ Unauthorized role.");
       } else {
-        alert("No user role found.");
+        alert("❌ No user role found.");
       }
     } catch (error) {
-      alert("Login failed: " + error.message);
+      alert("❌ Login failed: " + error.message);
     }
   };
 
@@ -37,7 +41,9 @@ export default function LoginPage({ setUserRole }) {
       <div className="login-card">
         <h1>🔐</h1>
         <h2>Sign in to <br /> <strong>Dashboard</strong></h2>
-        <p className="text-muted mb-3">Access for <strong>manager</strong> and <strong>cook</strong> roles only.</p>
+        <p className="text-muted mb-3">
+          Access for <strong>manager</strong> and <strong>cook</strong> roles only.
+        </p>
         <form onSubmit={handleLogin} className="login-form">
           <input
             type="email"

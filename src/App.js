@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import LoginPage from "./pages/LoginPage";
 import HomePage from "./pages/HomePage";
@@ -17,7 +17,14 @@ import OrderedLogsPage from "./pages/OrderedLogsPage";
 import ReceivedLogsPage from "./pages/ReceivedLogsPage";
 
 function App() {
-  const [userRole, setUserRole] = useState(null); // "manager" or "cook"
+  const [userRole, setUserRole] = useState(() => localStorage.getItem("userRole"));
+
+  // Save role to localStorage when changed
+  useEffect(() => {
+    if (userRole) {
+      localStorage.setItem("userRole", userRole);
+    }
+  }, [userRole]);
 
   const RequireRole = ({ role, children }) => {
     return userRole === role ? children : <Navigate to="/" replace />;
@@ -29,7 +36,7 @@ function App() {
         <Route path="/" element={<LoginPage setUserRole={setUserRole} />} />
         <Route path="/home" element={<HomePage />} />
 
-        {/* New role-based dashboards */}
+        {/* Dashboards */}
         <Route
           path="/manager/home"
           element={<RequireRole role="manager"><ManagerHomePage /></RequireRole>}
